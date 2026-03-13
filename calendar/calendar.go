@@ -8,7 +8,7 @@ import (
 // Duration measures the number of calendar months and/or days
 // between two calendar dates, depending on how it is constructed.
 type Duration struct {
-	Days int
+	Days   int
 	Months int
 }
 
@@ -48,15 +48,15 @@ func DurationDays(a, b time.Time) Duration {
 func epochDays(y int) int {
 	// Since Feb 29 hasn't happened in y yet,
 	// only sum leap days until y-1.
-	prev := y-1
-	return prev*365 + (prev/4) - (prev/100) + (prev/400)
+	prev := y - 1
+	return prev*365 + (prev / 4) - (prev / 100) + (prev / 400)
 }
 
 // DurationMonthDays builds a Duration while attempting
 // to align days of the month.
 func DurationMonthDays(a, b time.Time) Duration {
 	var d Duration
-	d.Months = 12 * (b.Year()-a.Year()) + int(b.Month()-a.Month())
+	d.Months = 12*(b.Year()-a.Year()) + int(b.Month()-a.Month())
 	d.Days = b.Day() - a.Day()
 	return d
 }
