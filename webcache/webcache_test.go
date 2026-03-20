@@ -273,3 +273,70 @@ func TestWebCache(t *testing.T) {
 		})
 	}
 }
+
+func TestWebCache_UpdateAll(t *testing.T) {
+	// Test URLs for the HTTP client's documents.
+	const docURL = "https://example.com/doc"     // set by default
+	const errorURL = "https://example.com/error" // not default
+
+	type Case struct {
+		name    string
+		setup   func(w *webcache.WebCache, c MapClient)
+		wantErr string
+	}
+	cases := []Case{
+		{name: "empty"},
+		{
+			name: "one error",
+			setup: func(w *webcache.WebCache, c MapClient) {
+				c[errorURL] = ClientResult{Err: errors.New("fetch error")}
+				w.SetExpiration(errorURL, time.Hour)
+			},
+			wantErr: errorURL + ": fetch error",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			// Create a WebCache.
+			w, err := webcache.New()
+			if err != nil {
+				t.Errorf("expected no error creating WebCache, got: %v", err)
+				return
+			}
+
+			// Set up WebCache mocks.
+			nowFunc := func() time.Time {
+				return time.Date(2026, time.May, 18, 13, 0, 0, 0, time.UTC)
+			}
+			w.Now = nowFunc
+			client := make(MapClient)
+			w.HTTPClient = client
+
+			// Default: add a test document to the mock HTTP client.
+			client[docURL] = ClientResult{R: &http.Response{
+				Status:     http.StatusText(http.StatusOK),
+				StatusCode: http.StatusOK,
+				Body:       NewBody("ok"),
+			}}
+			w.SetExpiration(docURL, time.Hour)
+
+			// Override the defaults with the optional setup func.
+			if c.setup != nil {
+				c.setup(w, client)
+			}
+
+			// Call UpdateAll.
+			var opts *webcache.UpdateOptions
+			err = w.UpdateAll(t.Context(), opts)
+			if c.wantErr == "" {
+				if err != nil {
+					t.Errorf("expected no error during UpdateAll, got: %v", err)
+				}
+			} else if err == nil {
+				t.Errorf("got nil err, want: %s", c.wantErr)
+			} else if !strings.Contains(err.Error(), c.wantErr) {
+				t.Errorf("want err:\n%s\ngot err:\n%v", c.wantErr, err)
+			}
+		})
+	}
+}
