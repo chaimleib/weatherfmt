@@ -1013,23 +1013,30 @@ func TestCharsetReader(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			r := strings.NewReader("accent e: \xe9")
 			got, err := weathergov.CharsetReader(c.name, r)
+
+			// Check the error.
 			if c.wantErr == "" {
 				if err != nil {
 					t.Errorf("want nil err, got: %v", err)
-				}
-				gotBuf, err := io.ReadAll(got)
-				if err != nil {
-					t.Errorf("error while reading converted string: %v", err)
-				}
-				const want = "accent e: \xc3\xa9"
-				gotStr := string(gotBuf)
-				if gotStr != want {
-					t.Errorf("want: %s\ngot:  %s", want, gotStr)
 				}
 			} else if err == nil {
 				t.Errorf("got nil err, want: %s", c.wantErr)
 			} else if !strings.Contains(err.Error(), c.wantErr) {
 				t.Errorf("want err:\n%s\ngot err:\n%v", c.wantErr, err)
+			}
+
+			// On success, check the converted string.
+			if c.wantErr != "" || err != nil {
+				return
+			}
+			gotBuf, err := io.ReadAll(got)
+			if err != nil {
+				t.Errorf("error while reading converted string: %v", err)
+			}
+			const want = "accent e: \xc3\xa9"
+			gotStr := string(gotBuf)
+			if gotStr != want {
+				t.Errorf("want: %s\ngot:  %s", want, gotStr)
 			}
 		})
 	}
