@@ -138,26 +138,30 @@ func (vals Values) Strings() []string {
 	return result
 }
 
-func (vals Values) IntPointers() []*int {
-	result := make([]*int, 0, len(vals))
+// Ints parses a Values as a slice of int.
+// Nils and empty strings get converted to 0.
+func (vals Values) Ints() []int {
+	result := make([]int, 0, len(vals))
 	for _, val := range vals {
-		if val.Nil {
-			result = append(result, nil)
-		} else if i, err := strconv.Atoi(val.Value); err != nil {
-			result = append(result, &i)
+		if val.Nil || val.Value == "" {
+			result = append(result, 0)
+		} else if i, err := strconv.Atoi(val.Value); err == nil {
+			result = append(result, i)
 		} else {
-			result = append(result, nil)
+			result = append(result, 0)
 		}
 	}
 	return result
 }
 
+// Floats parses a Values as a slice of float64.
+// Nils and empty strings get converted to 0.
 func (vals Values) Floats() []float64 {
 	result := make([]float64, 0, len(vals))
 	for _, val := range vals {
-		if val.Nil {
+		if val.Nil || val.Value == "" {
 			result = append(result, 0)
-		} else if f, err := strconv.ParseFloat(val.Value, 64); err != nil {
+		} else if f, err := strconv.ParseFloat(val.Value, 64); err == nil {
 			result = append(result, f)
 		} else {
 			result = append(result, 0)
